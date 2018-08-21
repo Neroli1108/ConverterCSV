@@ -78,10 +78,7 @@ public:
 	ConverterOperation()=default;
 	~ConverterOperation()=default;
     void storeCSVData(std::string address,std::map<FrameId, OrignalData> &storeFiles);
-//    void calculateSummaryData();
-private:
-   
-
+    void calculateSummaryData(std::map<FrameId, OrignalData> &storeFiles,std::vector<SummaryData>&storeSummaryData);
 };
 
 
