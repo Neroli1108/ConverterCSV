@@ -1,10 +1,72 @@
 #include "Converter.h"
 
-//
-//ExtractAddress::ExtractAddress(std::string address) {
-//    folderPath = new std::filesystem::path(address);
-//    DirectoryIterator = new std::filesystem::directory_iterator(*folderPath);
-//}
+
+FileManager::FileManager(std::string address, std::string DestAddress) {
+    this->folderPath = new std::filesystem::path(address);
+    this->DirectoryIterator = new std::filesystem::directory_iterator(*folderPath);
+	this->destFolderPath = new std::filesystem::path(DestAddress);
+}
+
+
+
+std::filesystem::directory_iterator* FileManager::getDirectoryIterator() {
+	return this->DirectoryIterator;
+}
+
+
+std::map<FrameId, OrignalData> FileManager::getStoreFiles() {
+	return this->storeFiles;
+}
+
+std::vector<SummaryData> FileManager::getStoreSummaryData() {
+	return this->storeSummaryData;
+}
+
+void FileManager::setStoreFiles(OrignalData& od) {
+	this->storeFiles[od.ID] = od;
+}
+void FileManager::setStoreSummaryData(SummaryData& sd) {
+	this->storeSummaryData.push_back(sd);
+}
+
+void FileManager::recordAllSummaryData() {
+	for ( auto sd : storeSummaryData)
+	{
+		std::time_t t = std::time(0);
+		std::tm now;
+
+		localtime_s(&now,&t);
+		std::ofstream file;
+		std::string address = destFolderPath->string()+sd.dataName+".csv";
+		file.open(address);
+		file << "Date " << std::to_string(now.tm_mon+1) << "/" << std::to_string(now.tm_mday) << "/" << std::to_string(now.tm_year+1900) << std::endl;
+		file << "Stat Name,Target,Actual,Delta(%)" << std::endl;
+		file << "Frame Time(ms),"+ std::to_string(TargetFrameTime)+"," + std::to_string(sd.ActualFrameTime) + "," + std::to_string(std::ceil(sd.FrameTimeDelta*100))+"%" << std::endl;
+		if (sd.FrameTimeBound == "GPU Bound") {
+			file << " -Game Thread, ," + std::to_string(sd.ActualGameThread) + ", ,"  << std::endl;
+			file << " -Render Thread, ," + std::to_string(sd.ActualRenderThread) + ", ," << std::endl;
+			file << " -GPU, ," + std::to_string(sd.ActualGPU) + "," + sd.FrameTimeBound<< std::endl;
+		}
+		else if (sd.FrameTimeBound == "Game Thread Bound") {
+
+			file << " -Game Thread, ," + std::to_string(sd.ActualGameThread) + ","+sd.FrameTimeBound << std::endl;
+			file << " -Render Thread, ," + std::to_string(sd.ActualRenderThread) + ", ," << std::endl;
+			file << " -GPU, ," + std::to_string(sd.ActualGPU) + ", ," << std::endl;
+		}
+		else
+		{
+			file << " -Game Thread, ," + std::to_string(sd.ActualGameThread) + ", ," << std::endl;
+			file << " -Render Thread, ," + std::to_string(sd.ActualRenderThread) + ","+ sd.FrameTimeBound << std::endl;
+			file << " -GPU, ," + std::to_string(sd.ActualGPU) + ", ," << std::endl;
+		}
+		file << "Triangles Drawn,"+ std::to_string(TargetTriganlesDrawn)+ ","+ std::to_string(sd.ActualTrianglesDrawn) + "," + std::to_string(std::ceil(sd.TrianglesDrawnDelta*100)) +"%"<< std::endl;
+		file << "Mesh Drawn Calls," + std::to_string(TargetMeshDrawCalls) + "," + std::to_string(sd.ActualMeshDrawCalls) + "," + std::to_string(std::ceil(sd.MeshDrawCallsDelta * 100)) + "%" << std::endl;
+		file.close();
+
+	}
+
+}
+
 
 
 void ConverterOperation::storeCSVData(std::string address,std::map<FrameId, OrignalData> &storeFiles){
@@ -59,7 +121,7 @@ void ConverterOperation::storeCSVData(std::string address,std::map<FrameId, Orig
     }
 
 
-void ConverterOperation::calculateSummaryData(std::map<FrameId, OrignalData> &storeFiles,SummaryData& storeSummaryData){
+void ConverterOperation::calculateSummaryData(std::map<FrameId, OrignalData> &storeFiles,SummaryData& storeSummaryData,std::string name){
     float num = storeFiles.size();
     float totalSTAT_StaticMeshTriangles = 0.00;
     float totalSTAT_MeshDrawCalls = 0.00;
@@ -75,7 +137,7 @@ void ConverterOperation::calculateSummaryData(std::map<FrameId, OrignalData> &st
         totalSTAT_TotalSceneRenderingTime += it->second.STAT_TotalSceneRenderingTime;
         totalSTAT_StaticMeshTriangles += it->second.STAT_StaticMeshTriangles;
     }
-    
+	storeSummaryData.dataName = name;
     storeSummaryData.ActualFrameTime = totalSTAT_FrameTime/num;
     storeSummaryData.ActualGPU = totalStat_GPU_Total/num;
     storeSummaryData.ActualGameThread = totalGameThread/num;
@@ -89,17 +151,17 @@ void ConverterOperation::calculateSummaryData(std::map<FrameId, OrignalData> &st
     
     if (storeSummaryData.ActualGPU >= storeSummaryData.ActualRenderThread) {
         if (storeSummaryData.ActualGPU>=storeSummaryData.ActualGameThread) {
-            storeSummaryData.FrameTiemBound = "GPU Bound";
+            storeSummaryData.FrameTimeBound = "GPU Bound";
         }else if(storeSummaryData.ActualRenderThread>=storeSummaryData.ActualGameThread){
-            storeSummaryData.FrameTiemBound = "Render Thread Bound";
+            storeSummaryData.FrameTimeBound = "Render Thread Bound";
         }else{
-            storeSummaryData.FrameTiemBound = "Game Thread Bound";
+            storeSummaryData.FrameTimeBound = "Game Thread Bound";
         }
     }else{
         if (storeSummaryData.ActualRenderThread>=storeSummaryData.ActualGameThread) {
-            storeSummaryData.FrameTiemBound = "Render Thread Bound";
+            storeSummaryData.FrameTimeBound = "Render Thread Bound";
         }else{
-            storeSummaryData.FrameTiemBound = "Game Thread Bound";
+            storeSummaryData.FrameTimeBound = "Game Thread Bound";
         }
     }
     

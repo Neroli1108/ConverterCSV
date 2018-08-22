@@ -3,13 +3,17 @@
 
 
 #include <iostream>
-//#include<filesystem>
+#include <filesystem>
 #include <string>
 #include <map>
 #include <vector>
 #include <fstream>
 #include <sstream>
-#include <dirent.h>
+#include <ostream>
+#include <ctime>
+#include <chrono>
+
+//#include <dirent.h>
 
 #define TargetFrameTime 100
 #define TargetTriganlesDrawn 18000000
@@ -33,6 +37,8 @@ struct OrignalData
 //store the data after being calculated
 struct SummaryData 
 {
+	std::string dataName;
+
 	float ActualFrameTime;
 	float ActualGameThread;
 	float ActualRenderThread;
@@ -42,7 +48,7 @@ struct SummaryData
 	float FrameTimeDelta;
 	float TrianglesDrawnDelta;
 	float MeshDrawCallsDelta;
-	std::string FrameTiemBound;
+	std::string FrameTimeBound;
 
 	//record the date
 
@@ -51,23 +57,27 @@ struct SummaryData
 
 // open the specific directory and iterate all CSV files
 //
-//class ExtractAddress
-//{
-//public:
-//    ExtractAddress() = default;
-//    ExtractAddress(std::string address);
-//    ~ExtractAddress() = default;
-//    std::map<FrameId, OrignalData> getStoreFiles();
-//    std::vector<SummaryData> getStoreSummaryData();
-//
-//
-//private:
-//    std::filesystem::path* folderPath;
-//    std::filesystem::directory_iterator* DirectoryIterator;
-//    std::map<FrameId, OrignalData> storeFiles;
-//    std::vector<SummaryData> storeSummaryData;
-//};
-//
+class FileManager
+{
+public:
+	FileManager() = default;
+	FileManager(std::string Sourceaddress,std::string DestAddress);
+	~FileManager() = default;
+	std::map<FrameId, OrignalData> getStoreFiles();
+	std::vector<SummaryData> getStoreSummaryData();
+	void setStoreFiles(OrignalData& od);
+	void setStoreSummaryData(SummaryData& sd);
+	std::filesystem::directory_iterator* getDirectoryIterator();
+	void recordAllSummaryData();
+
+private:
+	std::filesystem::path* folderPath;
+	std::filesystem::directory_iterator* DirectoryIterator;
+	std::map<FrameId, OrignalData> storeFiles;
+	std::vector<SummaryData> storeSummaryData;
+	std::filesystem::path* destFolderPath;
+};
+
 
 
 
@@ -79,28 +89,28 @@ public:
 	ConverterOperation()=default;
 	~ConverterOperation()=default;
     void storeCSVData(std::string address,std::map<FrameId, OrignalData> &storeFiles);
-    void calculateSummaryData(std::map<FrameId, OrignalData> &storeFiles,SummaryData& storeSummaryData);
+    void calculateSummaryData(std::map<FrameId, OrignalData> &storeFiles,SummaryData& storeSummaryData,std::string name);
     OrignalData retriveNthData(int n,std::map<FrameId, OrignalData> &storeFiles);
 };
 
 
-//
-//
-//class Converter
-//{
-//public:
-//    Converter();
-//    ~Converter();
-//
-//private:
-//
-//};
-//
-//Converter::Converter()
-//{
-//
-//}
-//
-//Converter::~Converter()
-//{
-//}
+
+
+class Converter
+{
+public:
+    Converter();
+    ~Converter();
+
+private:
+
+};
+
+Converter::Converter()
+{
+
+}
+
+Converter::~Converter()
+{
+}
