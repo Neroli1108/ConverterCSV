@@ -9,6 +9,7 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include <dirent.h>
 
 #define TargetFrameTime 100
 #define TargetTriganlesDrawn 18000000
@@ -38,7 +39,7 @@ struct SummaryData
 	float ActualGPU;
 	float ActualTrianglesDrawn;
 	float ActualMeshDrawCalls;
-	float FrameTimeDelat;
+	float FrameTimeDelta;
 	float TrianglesDrawnDelta;
 	float MeshDrawCallsDelta;
 	std::string FrameTiemBound;
@@ -78,7 +79,8 @@ public:
 	ConverterOperation()=default;
 	~ConverterOperation()=default;
     void storeCSVData(std::string address,std::map<FrameId, OrignalData> &storeFiles);
-    void calculateSummaryData(std::map<FrameId, OrignalData> &storeFiles,std::vector<SummaryData>&storeSummaryData);
+    void calculateSummaryData(std::map<FrameId, OrignalData> &storeFiles,SummaryData& storeSummaryData);
+    OrignalData retriveNthData(int n,std::map<FrameId, OrignalData> &storeFiles);
 };
 
 
