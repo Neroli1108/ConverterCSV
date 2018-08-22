@@ -63,8 +63,8 @@ public:
 	FileManager() = default;
 	FileManager(std::string Sourceaddress,std::string DestAddress);
 	~FileManager() = default;
-	std::map<FrameId, OrignalData> getStoreFiles();
-	std::vector<SummaryData> getStoreSummaryData();
+	std::map<FrameId, OrignalData>& getStoreFiles();
+	std::vector<SummaryData>& getStoreSummaryData();
 	void setStoreFiles(OrignalData& od);
 	void setStoreSummaryData(SummaryData& sd);
 	std::filesystem::directory_iterator* getDirectoryIterator();
@@ -101,16 +101,13 @@ class Converter
 public:
     Converter();
     ~Converter();
-
+	Converter(std::string src, std::string dst);
+	void storeData();
+	void writeSummary();
 private:
+	FileManager* fm;
+	ConverterOperation* co;
 
 };
 
-Converter::Converter()
-{
 
-}
-
-Converter::~Converter()
-{
-}

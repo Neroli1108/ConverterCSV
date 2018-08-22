@@ -14,11 +14,11 @@ std::filesystem::directory_iterator* FileManager::getDirectoryIterator() {
 }
 
 
-std::map<FrameId, OrignalData> FileManager::getStoreFiles() {
+std::map<FrameId, OrignalData>& FileManager::getStoreFiles() {
 	return this->storeFiles;
 }
 
-std::vector<SummaryData> FileManager::getStoreSummaryData() {
+std::vector<SummaryData>& FileManager::getStoreSummaryData() {
 	return this->storeSummaryData;
 }
 
@@ -179,4 +179,36 @@ OrignalData ConverterOperation::retriveNthData(int n, std::map<FrameId, OrignalD
 
 
 
+Converter::Converter(std::string src = "D:/CSV/", std::string dst = "D:/Result/") {
+	this->fm = new FileManager(src, dst);
+	this->co = new ConverterOperation();
+}
 
+void Converter::storeData() {
+
+	for (auto it : *(this->fm->getDirectoryIterator()))
+	{
+		SummaryData sd;
+		auto p = it.path();
+		this->co->storeCSVData(p.string(), this->fm->getStoreFiles());
+		this->co->calculateSummaryData(this->fm->getStoreFiles(), sd, p.filename().string().substr(0, p.filename().string().size() - 4));
+		this->fm->setStoreSummaryData(sd);
+		this->fm->getStoreFiles().clear();
+	}
+}
+
+
+void Converter::writeSummary() {
+	this->fm->recordAllSummaryData();
+}
+
+
+Converter::Converter()
+{
+	fm = new FileManager();
+	co = new ConverterOperation();
+}
+
+Converter::~Converter()
+{
+}
