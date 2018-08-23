@@ -7,6 +7,9 @@ FileManager::FileManager(std::string address, std::string DestAddress) {
 	this->destFolderPath = new std::filesystem::path(DestAddress);
 }
 
+FileManager::FileManager(std::string destfolder) {
+	this->destFolderPath = new std::filesystem::path(destfolder);
+}
 
 
 std::filesystem::directory_iterator* FileManager::getDirectoryIterator() {
@@ -30,7 +33,7 @@ void FileManager::setStoreSummaryData(SummaryData& sd) {
 }
 
 void FileManager::recordAllSummaryData() {
-	for ( auto sd : storeSummaryData)
+	for ( auto sd : this->storeSummaryData)
 	{
 		std::time_t t = std::time(0);
 		std::tm now;
@@ -41,7 +44,7 @@ void FileManager::recordAllSummaryData() {
 		file.open(address);
 		file << "Date " << std::to_string(now.tm_mon+1) << "/" << std::to_string(now.tm_mday) << "/" << std::to_string(now.tm_year+1900) << std::endl;
 		file << "Stat Name,Target,Actual,Delta(%)" << std::endl;
-		file << "Frame Time(ms),"+ std::to_string(TargetFrameTime)+"," + std::to_string(sd.ActualFrameTime) + "," + std::to_string(std::ceil(sd.FrameTimeDelta*100))+"%" << std::endl;
+		file << "Frame Time(ms),"+ std::to_string(TargetFrameTime)+"," + std::to_string(sd.ActualFrameTime) + "," + std::to_string((double)(sd.FrameTimeDelta*100))+"%" << std::endl;
 		if (sd.FrameTimeBound == "GPU Bound") {
 			file << " -Game Thread, ," + std::to_string(sd.ActualGameThread) + ", ,"  << std::endl;
 			file << " -Render Thread, ," + std::to_string(sd.ActualRenderThread) + ", ," << std::endl;
@@ -59,8 +62,8 @@ void FileManager::recordAllSummaryData() {
 			file << " -Render Thread, ," + std::to_string(sd.ActualRenderThread) + ","+ sd.FrameTimeBound << std::endl;
 			file << " -GPU, ," + std::to_string(sd.ActualGPU) + ", ," << std::endl;
 		}
-		file << "Triangles Drawn,"+ std::to_string(TargetTriganlesDrawn)+ ","+ std::to_string(sd.ActualTrianglesDrawn) + "," + std::to_string(std::ceil(sd.TrianglesDrawnDelta*100)) +"%"<< std::endl;
-		file << "Mesh Drawn Calls," + std::to_string(TargetMeshDrawCalls) + "," + std::to_string(sd.ActualMeshDrawCalls) + "," + std::to_string(std::ceil(sd.MeshDrawCallsDelta * 100)) + "%" << std::endl;
+		file << "Triangles Drawn,"+ std::to_string(TargetTriganlesDrawn)+ ","+ std::to_string(sd.ActualTrianglesDrawn) + "," + std::to_string((double)(sd.TrianglesDrawnDelta*100)) +"%"<< std::endl;
+		file << "Mesh Drawn Calls," + std::to_string(TargetMeshDrawCalls) + "," + std::to_string(sd.ActualMeshDrawCalls) + "," + std::to_string((double)(sd.MeshDrawCallsDelta * 100)) + "%" << std::endl;
 		file.close();
 
 	}
@@ -198,10 +201,38 @@ void Converter::storeData() {
 }
 
 
+void Converter::storeSingleFileData(std::string srcfile) {
+	this->co->storeCSVData(srcfile, this->fm->getStoreFiles());
+}
+
+
+void Converter::writeSingleFileSummary(std::string srcfile, std::string dstfolder) {
+	SummaryData sd;
+	std::string name = srcfile.substr(srcfile.find_last_of("/\\")+1);
+	this->fm = new FileManager(dstfolder);
+	this->storeSingleFileData(srcfile);
+	this->co->calculateSummaryData(this->fm->getStoreFiles(),sd,name);
+	this->fm->setStoreSummaryData(sd);
+	this->fm->recordAllSummaryData();
+
+}
+
 void Converter::writeSummary() {
 	this->fm->recordAllSummaryData();
 }
 
+void Converter::showSpecificdata(std::string src, int n) {
+	this->storeSingleFileData(src);
+	OrignalData od = this->co->retriveNthData(n,this->fm->getStoreFiles());
+	std::cout << "Frame ID: " << od.ID << std::endl;
+	std::cout << "STAT_StaticMeshTriangles: " << od.STAT_StaticMeshTriangles << std::endl;
+	std::cout << "STAT_MeshDrawCalls: " << od.STAT_MeshDrawCalls << std::endl;
+	std::cout << "Stat_GPU_Total: " << od.Stat_GPU_Total << std::endl;
+	std::cout << "GameThread: " << od.GameThread << std::endl;
+	std::cout << "STAT_FrameTime: " << od.STAT_FrameTime << std::endl;
+	std::cout << "STAT_TotalSceneRenderingTime: " << od.STAT_TotalSceneRenderingTime << std::endl;
+
+}
 
 Converter::Converter()
 {

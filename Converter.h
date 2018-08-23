@@ -62,6 +62,7 @@ class FileManager
 public:
 	FileManager() = default;
 	FileManager(std::string Sourceaddress,std::string DestAddress);
+	FileManager(std::string destfolder);
 	~FileManager() = default;
 	std::map<FrameId, OrignalData>& getStoreFiles();
 	std::vector<SummaryData>& getStoreSummaryData();
@@ -104,6 +105,9 @@ public:
 	Converter(std::string src, std::string dst);
 	void storeData();
 	void writeSummary();
+	void storeSingleFileData(std::string src);
+	void writeSingleFileSummary(std::string src, std::string dst);
+	void showSpecificdata(std::string src , int n);
 private:
 	FileManager* fm;
 	ConverterOperation* co;
